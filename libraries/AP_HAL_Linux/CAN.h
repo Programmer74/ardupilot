@@ -25,6 +25,8 @@
 #include <map>
 #include <unordered_set>
 #include <poll.h>
+#include "PollerThread.h"
+#include "Scheduler.h"
 
 namespace Linux {
 
@@ -158,6 +160,15 @@ private:
     std::vector<can_filter> _hw_filters_container;
 };
 
+
+class CANWrapperCb : public TimerPollable::WrapperCb {
+public:
+    ~CANWrapperCb();
+    PollerThread thread;
+    void start_cb() override;
+    void end_cb() override;
+};
+
 class CANManager: public AP_HAL::CANManager {
 public:
     static CANManager *from(AP_HAL::CANManager *can)
@@ -194,6 +205,8 @@ public:
     int init(uint8_t can_number);
 
     int addIface(const std::string& iface_name);
+    
+    AP_HAL::Device::PeriodicHandle register_periodic_callback(uint32_t period_usec, uint8_t iface_num);
 
 private:
     class IfaceWrapper : public CAN
@@ -211,6 +224,9 @@ private:
     bool _initialized;
 
     std::vector<std::unique_ptr<IfaceWrapper>> _ifaces;
+    
+    void _periodic_callback();
+    CANWrapperCb wcb;
 };
 
 }

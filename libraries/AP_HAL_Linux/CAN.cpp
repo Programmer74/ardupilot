@@ -466,6 +466,11 @@ void CANManager::_timer_tick()
     }
 }
 
+void CANManager::_periodic_callback() 
+{
+    this->_timer_tick();
+}
+
 bool CANManager::begin(uint32_t bitrate, uint8_t can_number)
 {
     if (init(can_number) >= 0) {
@@ -606,6 +611,31 @@ int CANManager::addIface(const std::string& iface_name)
     hal.console->printf("New iface '%s' fd %d\n", iface_name.c_str(), fd);
 
     return _ifaces.size() - 1;
+}
+
+
+CANWrapperCb::~CANWrapperCb() {};
+void CANWrapperCb::start_cb() {};
+void CANWrapperCb::end_cb() {};
+
+AP_HAL::Device::PeriodicHandle CANManager::register_periodic_callback(
+    uint32_t period_usec, uint8_t iface_num)
+{
+    
+    TimerPollable *p = wcb.thread.add_timer(FUNCTOR_BIND_MEMBER(&CANManager::_periodic_callback, void), &wcb, period_usec);
+    if (!p) {
+        AP_HAL::panic("Could not create periodic callback");
+    }
+
+    if (!wcb.thread.is_started()) {
+        char name[16];
+        snprintf(name, sizeof(name), "ap-uavcan-%u", iface_num);
+        wcb.thread.set_stack_size(AP_LINUX_SENSORS_STACK_SIZE);
+        wcb.thread.start(name, AP_LINUX_SENSORS_SCHED_POLICY,
+                          AP_LINUX_SENSORS_SCHED_PRIO);
+    }
+
+    return static_cast<AP_HAL::Device::PeriodicHandle>(p);
 }
 
 #endif

@@ -139,6 +139,9 @@ void AP_BoardConfig_CAN::setup_canbus(void)
 
                         if (_var_info_can_protocol[i]._uavcan->try_init() == true) {
                             any_uavcan_present = true;
+                            #if CONFIG_HAL_BOARD == HAL_BOARD_LINUX
+                                static_cast<Linux::CANManager*>(hal.can_mgr[i])->register_periodic_callback(1, i);
+                            #endif
                         } else {
                             printf("Failed to initialize uavcan interface %d\n\r", i + 1);
                         }
