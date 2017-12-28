@@ -301,8 +301,10 @@ void CAN::_pollWrite()
 
 void CAN::_pollRead()
 {
-    while (true)
+    uint8_t iterations_count = 0;
+    while (iterations_count < CAN_MAX_POLL_ITERATIONS_COUNT)
     {
+        iterations_count++;
         RxItem rx;
         rx.ts_mono = getMonotonic();  // Monotonic timestamp is not required to be precise (unlike UTC)
         bool loopback = false;
