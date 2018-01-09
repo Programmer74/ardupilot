@@ -110,14 +110,12 @@ void AP_BoardConfig_CAN::setup_canbus(void)
                 #endif
                 
             }
-            
-            #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
-                if (hal.can_mgr[drv_num - 1] != nullptr) {
-                    initret &= hal.can_mgr[drv_num - 1]->begin(_var_info_can[i]._can_bitrate, i);
-                } else {
-                    printf("Failed to initialize can interface %d\n\r", i + 1);
-                }
-            #endif
+
+            if (hal.can_mgr[drv_num - 1] != nullptr) {
+                initret &= hal.can_mgr[drv_num - 1]->begin(_var_info_can[i]._can_bitrate, i);
+            } else {
+                printf("Failed to initialize can interface %d\n\r", i + 1);
+            }
         }
     }
 
@@ -139,20 +137,12 @@ void AP_BoardConfig_CAN::setup_canbus(void)
                         hal.can_mgr[i]->set_UAVCAN(_var_info_can_protocol[i]._uavcan);
                         _var_info_can_protocol[i]._uavcan->set_parent_can_mgr(hal.can_mgr[i]);
 
-                        #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
-                            if (_var_info_can_protocol[i]._uavcan->try_init() == true) {
-                                any_uavcan_present = true;
-                            } else {
-                                printf("Failed to initialize uavcan interface %d\n\r", i + 1);
-                            }
-                        #elif CONFIG_HAL_BOARD == HAL_BOARD_LINUX
-                            if (!hal.can_mgr[i]->begin(_var_info_can[i]._can_bitrate, i)) {
-                                any_uavcan_present = true;
-                                hal.console->printf("Failed to initialize can_mgr\n");
-                            } else {
-                                hal.console->printf("can_mgr initialized well\n");
-                            }
-                        #endif 
+                        if (_var_info_can_protocol[i]._uavcan->try_init() == true) {
+                            any_uavcan_present = true;
+                        } else {
+                            printf("Failed to initialize uavcan interface %d\n\r", i + 1);
+                        }
+
                     } else {
                         AP_HAL::panic("Failed to allocate uavcan %d\n\r", i + 1);
                     }
